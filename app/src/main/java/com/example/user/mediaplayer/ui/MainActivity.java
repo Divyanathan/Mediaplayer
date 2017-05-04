@@ -1,16 +1,13 @@
 package com.example.user.mediaplayer.ui;
 
 import android.app.LoaderManager;
-import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -19,14 +16,14 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.widget.Toast;
 
 import com.example.user.mediaplayer.R;
 import com.example.user.mediaplayer.adapter.SongRecyclerAdapter;
 import com.example.user.mediaplayer.jdo.SongJDO;
+import com.example.user.mediaplayer.listener.OnClick;
 import com.example.user.mediaplayer.listener.ReCyclerItemClickListener;
+import com.example.user.mediaplayer.utility.UtilityClass;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -49,25 +46,16 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mRecyclerView = (RecyclerView) findViewById(R.id.mediaPlayerRecylerView);
 
 
-        mRecyclerView.addOnItemTouchListener(new ReCyclerItemClickListener(this, new ReCyclerItemClickListener.OnItemClickListener() {
+        mRecyclerView.addOnItemTouchListener(new ReCyclerItemClickListener(this, new OnClick() {
             @Override
             public void onItemClick(View v, int postion) {
-                SongJDO lSongJDo = mSongJDOArrayList.get(postion);
+                Intent lPlaySongIntent=new Intent(MainActivity.this,PlaySongActivity.class);
 
-                Uri contentUri = ContentUris.withAppendedId(
-                        android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Long.parseLong(lSongJDo.getmSongId()));
+                lPlaySongIntent.putExtra(UtilityClass.RECYCLER_ITEM_POSITION,postion);
+                lPlaySongIntent.putExtra(UtilityClass.SONG_JDO_ARRAY_LIST,mSongJDOArrayList);
 
-                mMediaPlayer = new MediaPlayer();
-                mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-
-                try {
-                    mMediaPlayer.setDataSource(getApplicationContext(), contentUri);
-                    mMediaPlayer.prepareAsync();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                mMediaPlayer.start();
+                startActivity(lPlaySongIntent);
+                overridePendingTransition(R.anim.slide_in_left,R.anim.slide_out_leftt);
 
             }
         }));

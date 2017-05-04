@@ -1,10 +1,12 @@
 package com.example.user.mediaplayer.jdo;
 
+import java.io.Serializable;
+
 /**
  * Created by user on 03/05/17.
  */
 
-public class SongJDO {
+public class SongJDO implements Serializable {
 
     String mSongId,mSongTitel,mSongArtist,mSongDuration;
 
