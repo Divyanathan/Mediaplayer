@@ -19,6 +19,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.PlaySongActivity"></activity>
+        <service android:name=".service.MediaPlayerIntentService"/>
+        <service android:name=".service.MediaPlayerUnBoundService"/>
+        <service android:name=".service.MediaPlayerBoundService"/>
     </application>
 
 </manifest>

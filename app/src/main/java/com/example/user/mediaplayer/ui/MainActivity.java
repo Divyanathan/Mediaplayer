@@ -1,13 +1,17 @@
 package com.example.user.mediaplayer.ui;
 
 import android.app.LoaderManager;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.MediaPlayer;
+import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -15,6 +19,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 
 import com.example.user.mediaplayer.R;
@@ -22,7 +27,9 @@ import com.example.user.mediaplayer.adapter.SongRecyclerAdapter;
 import com.example.user.mediaplayer.jdo.SongJDO;
 import com.example.user.mediaplayer.listener.OnClick;
 import com.example.user.mediaplayer.listener.ReCyclerItemClickListener;
-import com.example.user.mediaplayer.utility.UtilityClass;
+import com.example.user.mediaplayer.service.MediaPlayerBoundService;
+
+import  com.example.user.mediaplayer.service.MediaPlayerBoundService.LocalBinder;
 
 import java.util.ArrayList;
 
@@ -37,6 +44,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     final int REQUEST_CODE_TO_GET_PERMISSION = 1;
     final int ID_TO_START_CALLBACK = 1;
+    Intent mStartService;
+
+
+    MediaPlayerBoundService mMediaPlayerBoundService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,13 +60,24 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mRecyclerView.addOnItemTouchListener(new ReCyclerItemClickListener(this, new OnClick() {
             @Override
             public void onItemClick(View v, int postion) {
-                Intent lPlaySongIntent=new Intent(MainActivity.this,PlaySongActivity.class);
 
-                lPlaySongIntent.putExtra(UtilityClass.RECYCLER_ITEM_POSITION,postion);
-                lPlaySongIntent.putExtra(UtilityClass.SONG_JDO_ARRAY_LIST,mSongJDOArrayList);
 
-                startActivity(lPlaySongIntent);
-                overridePendingTransition(R.anim.slide_in_left,R.anim.slide_out_leftt);
+//                Intent lPlaySongIntent=new Intent(MainActivity.this,PlaySongActivity.class);
+//
+//                lPlaySongIntent.putExtra(UtilityClass.RECYCLER_ITEM_POSITION,postion);
+//                lPlaySongIntent.putExtra(UtilityClass.SONG_JDO_ARRAY_LIST,mSongJDOArrayList);
+//
+//                startActivity(lPlaySongIntent);
+//                overridePendingTransition(R.anim.slide_in_left,R.anim.slide_out_leftt);
+
+
+                 mStartService =new Intent(MainActivity.this, MediaPlayerBoundService.class);
+
+                startService(mStartService);
+                bindService(mStartService,mServiceConnection, Context.BIND_AUTO_CREATE);
+
+
+
 
             }
         }));
@@ -85,6 +107,38 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
 
     }
+
+    ServiceConnection mServiceConnection=new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder pIBinderService) {
+
+            Log.e("MediaPlayerBoundService", "onServiceConnected: " );
+
+           LocalBinder lLocalbinder=(LocalBinder) pIBinderService;
+
+            mMediaPlayerBoundService=lLocalbinder.getService();
+
+
+           mMediaPlayer = mMediaPlayerBoundService.getMediaPlayer();
+            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    Log.e("MediaPlayerBoundService", "onCompletion: " );
+
+                    mMediaPlayer.start();
+                    Log.e("MediaPlayerBoundService", "started again: " );
+
+                }
+            });
+
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.e("MediaPlayerBoundService", "onServiceDisconnected: " );
+
+        }
+    };
 
 
     /**

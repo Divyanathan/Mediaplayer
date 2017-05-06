@@ -22,8 +22,6 @@ import com.squareup.picasso.Picasso;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import java.util.logging.LogRecord;
-
 public class PlaySongActivity extends AppCompatActivity {
 
 
