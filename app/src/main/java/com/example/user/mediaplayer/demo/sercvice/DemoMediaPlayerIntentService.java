@@ -1,4 +1,4 @@
-package com.example.user.mediaplayer.service;
+package com.example.user.mediaplayer.demo.sercvice;
 
 import android.app.IntentService;
 import android.app.Service;
@@ -12,7 +12,7 @@ import android.widget.Toast;
  * Created by user on 05/05/17.
  */
 
-public class MediaPlayerIntentService extends IntentService {
+public class DemoMediaPlayerIntentService extends IntentService {
 
 
     final String TAG="MediaPlayer";
@@ -23,12 +23,12 @@ public class MediaPlayerIntentService extends IntentService {
      *
      * @param pClassName Used to pClassName the worker thread, important only for debugging.
      */
-    public MediaPlayerIntentService(String pClassName) {
+    public DemoMediaPlayerIntentService(String pClassName) {
         super(pClassName);
     }
 
 
-    public MediaPlayerIntentService() {
+    public DemoMediaPlayerIntentService() {
         super("calling the super class");
     }
 

@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import com.example.user.mediaplayer.R;
 import com.example.user.mediaplayer.jdo.SongJDO;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
@@ -32,7 +33,8 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
     public class MyViewHolder extends RecyclerView.ViewHolder {
 
         TextView sSongIdTextView, sTitleTextView, sArtistTextView;
-        ImageView sSongImageView;
+        ImageView sSongImageView,sFavourImageView;
+
 //        Context sContext;
 
         public MyViewHolder(View itemView) {
@@ -43,6 +45,7 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
             sSongIdTextView = (TextView) itemView.findViewById(R.id.songId);
 
             sSongImageView = (ImageView) itemView.findViewById(R.id.songImage);
+            sFavourImageView = (ImageView) itemView.findViewById(R.id.favourite);
         }
     }
 
@@ -61,7 +64,24 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
         mSongJDOobj = mSongJDOArrayList.get(position);
         holder.sSongIdTextView.setText(mSongJDOobj.getmSongId());
         holder.sTitleTextView.setText(mSongJDOobj.getmSongTitel());
-        holder.sArtistTextView.setText(mSongJDOobj.getmSongArtist());
+        holder.sArtistTextView.setText(mSongJDOobj.getmSongAlbum());
+
+        Picasso.with(mContext).load(mSongJDOobj.getmSongImage())
+                .centerCrop()
+                .resize(800, 800)
+                .placeholder(R.drawable.song)
+                .into(holder.sSongImageView);
+
+        if(mSongJDOobj.getmFavourite()==1){
+            holder.sFavourImageView.setVisibility(View.VISIBLE);
+            Picasso.with(mContext)
+                    .load(R.drawable.favourite_song)
+                    .centerCrop()
+                    .resize(800, 800)
+                    .into(holder.sFavourImageView);
+        }else {
+            holder.sFavourImageView.setVisibility(View.GONE);
+        }
 
     }
 

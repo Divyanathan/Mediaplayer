@@ -8,13 +8,39 @@ import java.io.Serializable;
 
 public class SongJDO implements Serializable {
 
-    String mSongId,mSongTitel,mSongArtist,mSongDuration;
+    String mSongId;
+    String mSongTitel;
+    String mSongArtist;
+    String mSongDuration;
+    String mSongAlbum;
+    String mSongImage;
+    int mFavourite;
 
-    public SongJDO(String mSongId, String mSongTitel, String mSongArtist,String mSongDuration) {
+    public SongJDO(String mSongId, String mSongTitel, String mSongArtist, String mSongDuration, String mSongAlbum, String mSongImage,int pFavourite) {
         this.mSongId = mSongId;
         this.mSongTitel = mSongTitel;
         this.mSongArtist = mSongArtist;
-        this.mSongDuration=mSongDuration;
+        this.mSongDuration = mSongDuration;
+        this.mSongAlbum = mSongAlbum;
+        this.mSongImage = mSongImage;
+        this.mFavourite=pFavourite;
+    }
+
+
+    public String getmSongAlbum() {
+        return mSongAlbum;
+    }
+
+    public void setmSongAlbum(String mSongAlbum) {
+        this.mSongAlbum = mSongAlbum;
+    }
+
+    public String getmSongImage() {
+        return mSongImage;
+    }
+
+    public void setmSongImage(String mSongImage) {
+        this.mSongImage = mSongImage;
     }
 
     public String getmSongDuration() {
@@ -48,5 +74,13 @@ public class SongJDO implements Serializable {
 
     public void setmSongArtist(String mSongArtist) {
         this.mSongArtist = mSongArtist;
+    }
+
+    public int getmFavourite() {
+        return mFavourite;
+    }
+
+    public void setmFavourite(int mFavourite) {
+        this.mFavourite = mFavourite;
     }
 }

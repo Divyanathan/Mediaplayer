@@ -1,4 +1,4 @@
-package com.example.user.mediaplayer.service;
+package com.example.user.mediaplayer.demo.sercvice;
 
 import android.app.Service;
 import android.content.Intent;
@@ -11,9 +11,9 @@ import com.example.user.mediaplayer.R;
  * Created by user on 05/05/17
  */
 
-public class MediaPlayerUnBoundService extends Service {
+public class DemoMediaPlayerUnBoundService extends Service {
 
-    private static final String TAG = "MediaPlayerUnBoundService";
+    private static final String TAG = "DemoMediaPlayerUnBoundService";
 
     @Override
     public void onCreate() {

@@ -2,6 +2,7 @@ package com.example.user.mediaplayer.ui;
 
 import android.app.LoaderManager;
 import android.content.ComponentName;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
@@ -11,6 +12,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
@@ -21,15 +23,15 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
-
 import com.example.user.mediaplayer.R;
 import com.example.user.mediaplayer.adapter.SongRecyclerAdapter;
+import com.example.user.mediaplayer.dataBase.SongTable;
 import com.example.user.mediaplayer.jdo.SongJDO;
 import com.example.user.mediaplayer.listener.OnClick;
 import com.example.user.mediaplayer.listener.ReCyclerItemClickListener;
 import com.example.user.mediaplayer.service.MediaPlayerBoundService;
-
-import  com.example.user.mediaplayer.service.MediaPlayerBoundService.LocalBinder;
+import com.example.user.mediaplayer.service.MediaPlayerBoundService.LocalBinder;
+import com.example.user.mediaplayer.utility.UtilityClass;
 
 import java.util.ArrayList;
 
@@ -39,15 +41,26 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     ArrayList<SongJDO> mSongJDOArrayList = new ArrayList<>();
 
+    String mSongId, mSongTitle, mSongArtist, mSongDuration, mSongAlbumm, mSongAbumId, mSongImgeUri,mSongColumnId;
+
+    int  mSongFavourite;
+
     final String IS_PERMISSION_GRANTED = "is_permission_granted";
     MediaPlayer mMediaPlayer;
 
     final int REQUEST_CODE_TO_GET_PERMISSION = 1;
     final int ID_TO_START_CALLBACK = 1;
+
+    final int REQUEST_CODE_FOR_INTENT = 1;
+
     Intent mStartService;
 
-
     MediaPlayerBoundService mMediaPlayerBoundService;
+
+    SongTable mSongTable;
+    SongJDO mSongJDObject;
+
+    SharedPreferences mSharedPrefrence;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,28 +69,26 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         mRecyclerView = (RecyclerView) findViewById(R.id.mediaPlayerRecylerView);
 
-
+        mSongTable = new SongTable(this);
+        mSongTable.open();
         mRecyclerView.addOnItemTouchListener(new ReCyclerItemClickListener(this, new OnClick() {
             @Override
             public void onItemClick(View v, int postion) {
 
 
-//                Intent lPlaySongIntent=new Intent(MainActivity.this,PlaySongActivity.class);
-//
-//                lPlaySongIntent.putExtra(UtilityClass.RECYCLER_ITEM_POSITION,postion);
-//                lPlaySongIntent.putExtra(UtilityClass.SONG_JDO_ARRAY_LIST,mSongJDOArrayList);
-//
-//                startActivity(lPlaySongIntent);
-//                overridePendingTransition(R.anim.slide_in_left,R.anim.slide_out_leftt);
+                Intent lPlaySongIntent = new Intent(MainActivity.this, PlaySongActivity.class);
 
 
-                 mStartService =new Intent(MainActivity.this, MediaPlayerBoundService.class);
-
-                startService(mStartService);
-                bindService(mStartService,mServiceConnection, Context.BIND_AUTO_CREATE);
+                startActivityForResult(lPlaySongIntent,REQUEST_CODE_FOR_INTENT);
+                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_leftt);
 
 
 
+
+                mSharedPrefrence=getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE,MODE_PRIVATE);
+                SharedPreferences.Editor lSharedPrefreceEditor=mSharedPrefrence.edit();
+                lSharedPrefreceEditor.putInt(mSongTable.SONG_ID,Integer.parseInt(mSongJDOArrayList.get(postion).getmSongId()));
+                lSharedPrefreceEditor.commit();
 
             }
         }));
@@ -99,34 +110,90 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         } else {
 
-//            getTheSong();
-
             getLoaderManager().initLoader(ID_TO_START_CALLBACK, null, this);
 
         }
 
 
+
     }
 
-    ServiceConnection mServiceConnection=new ServiceConnection() {
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode==REQUEST_CODE_FOR_INTENT) {
+            if (resultCode == RESULT_OK) {
+                mSongJDOArrayList.clear();
+                getSongsFromSQLite();
+                Log.d("ojdsf", "-------------------onActivityResult: ");
+            }
+        }
+    }
+
+    /**
+     * get the song from local db
+     */
+
+    void getSongsFromSQLite() {
+
+        Cursor lGetSongCursor = mSongTable.getSongs();
+
+        if (lGetSongCursor.moveToFirst()) {
+
+
+            do {
+                mSongColumnId=lGetSongCursor.getString(lGetSongCursor.getColumnIndex(mSongTable._ID));
+                mSongId = lGetSongCursor.getString(lGetSongCursor.getColumnIndex(mSongTable.SONG_ID));
+                mSongTitle = lGetSongCursor.getString(lGetSongCursor.getColumnIndex(mSongTable.SONG_TITLE));
+                mSongArtist = lGetSongCursor.getString(lGetSongCursor.getColumnIndex(mSongTable.SONG_ARTIST));
+                mSongDuration = lGetSongCursor.getString(lGetSongCursor.getColumnIndex(mSongTable.SONG_DURATION));
+                mSongAlbumm = lGetSongCursor.getString(lGetSongCursor.getColumnIndex(mSongTable.SONG_ALBUM));
+                mSongImgeUri = lGetSongCursor.getString(lGetSongCursor.getColumnIndex(mSongTable.SONG_IMAGE));
+                mSongFavourite=lGetSongCursor.getInt(lGetSongCursor.getColumnIndex(mSongTable.SONG_FAVOURITE));
+
+                mSongJDObject = new SongJDO(mSongId, mSongTitle, mSongArtist, mSongDuration, mSongAlbumm, mSongImgeUri, mSongFavourite );
+                mSongJDOArrayList.add(mSongJDObject);
+            } while (lGetSongCursor.moveToNext());
+        }
+
+
+        /**
+         *          set the adapter for Recycler View
+         */
+
+        SongRecyclerAdapter lSongRecyclerAdapter = new SongRecyclerAdapter(this, mSongJDOArrayList);
+
+        LinearLayoutManager lLinearLayoutManager = new LinearLayoutManager(this);
+        lLinearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+
+        mRecyclerView.setLayoutManager(lLinearLayoutManager);
+        mRecyclerView.setAdapter(lSongRecyclerAdapter);
+
+
+    }
+
+
+    /**
+     * connection to the bound service from the Activity
+     */
+    ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder pIBinderService) {
 
-            Log.e("MediaPlayerBoundService", "onServiceConnected: " );
+            Log.e("MediaPlayerBoundService", "onServiceConnected: ");
 
-           LocalBinder lLocalbinder=(LocalBinder) pIBinderService;
+            LocalBinder lLocalbinder = (LocalBinder) pIBinderService;
 
-            mMediaPlayerBoundService=lLocalbinder.getService();
+            mMediaPlayerBoundService = lLocalbinder.getService();
 
 
-           mMediaPlayer = mMediaPlayerBoundService.getMediaPlayer();
             mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
-                    Log.e("MediaPlayerBoundService", "onCompletion: " );
+                    Log.e("MediaPlayerBoundService", "onCompletion: ");
 
-                    mMediaPlayer.start();
-                    Log.e("MediaPlayerBoundService", "started again: " );
+//                    mMediaPlayer.start();
+                    Log.e("MediaPlayerBoundService", "started again: ");
 
                 }
             });
@@ -135,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            Log.e("MediaPlayerBoundService", "onServiceDisconnected: " );
+            Log.e("MediaPlayerBoundService", "onServiceDisconnected: ");
 
         }
     };
@@ -172,9 +239,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
             case ID_TO_START_CALLBACK:
 
-                String mSongId, mSongTitle, mSongArtist,mSongDuration;
-
-                SongJDO lSongJDObject;
 
                 if (pLoaderCursor.moveToFirst()) {
 
@@ -183,26 +247,22 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                         mSongId = pLoaderCursor.getString(pLoaderCursor.getColumnIndex(MediaStore.Audio.Media._ID));
                         mSongTitle = pLoaderCursor.getString(pLoaderCursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
                         mSongArtist = pLoaderCursor.getString(pLoaderCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-                        mSongDuration=pLoaderCursor.getString(pLoaderCursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
+                        mSongDuration = pLoaderCursor.getString(pLoaderCursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
+                        mSongAbumId = pLoaderCursor.getString(pLoaderCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
+                        mSongAlbumm = pLoaderCursor.getString(pLoaderCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
+
+                        mSongImgeUri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), Long.parseLong(mSongAbumId)).toString();
 
 
-                        lSongJDObject = new SongJDO(mSongId, mSongTitle, mSongArtist,mSongDuration);
-                        mSongJDOArrayList.add(lSongJDObject);
-
+                        if (!mSongTable.isSongExist(mSongId)) {
+                            mSongTable.addSongs(mSongId, mSongAlbumm, mSongTitle, mSongArtist, mSongDuration, mSongImgeUri);
+                        }
 
                     } while (pLoaderCursor.moveToNext());
 
-                    SongRecyclerAdapter lSongRecyclerAdapter = new SongRecyclerAdapter(this, mSongJDOArrayList);
-
-                    LinearLayoutManager lLinearLayoutManager = new LinearLayoutManager(this);
-                    lLinearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-
-                    mRecyclerView.setLayoutManager(lLinearLayoutManager);
-                    mRecyclerView.setAdapter(lSongRecyclerAdapter);
-
 
                 }
-
+                getSongsFromSQLite();
 
         }
 
@@ -233,7 +293,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 ActivityCompat.requestPermissions(this,
                         new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
                         REQUEST_CODE_TO_GET_PERMISSION);
-
 
             }
         } else {

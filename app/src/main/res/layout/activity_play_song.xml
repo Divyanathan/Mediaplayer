@@ -16,6 +16,8 @@
         android:layout_height="0dp"
         android:layout_marginTop="30dp"
         android:layout_weight="4"
+        android:scaleType="centerCrop"
+        android:background="@drawable/border"
         android:src="@drawable/song" />
 
     <TextView
@@ -24,8 +26,8 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
         android:layout_marginTop="10dp"
-        android:paddingLeft="20dp"
-        android:text="Title" />
+        android:text="Title"
+        android:textAlignment="center" />
 
     <TextView
         android:id="@+id/artistTextView"
@@ -33,8 +35,27 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
         android:layout_marginTop="10dp"
-        android:paddingLeft="20dp"
-        android:text="artist" />
+        android:text="artist"
+        android:textAlignment="center" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp">
+        <ImageView
+            android:id="@+id/repeatSong"
+            android:src="@drawable/repeat_off"
+            android:layout_alignParentLeft="true"
+            android:layout_width="40dp"
+            android:layout_height="match_parent" />
+        <ImageView
+            android:id="@+id/favourtieSong"
+            android:src="@drawable/favourite_song"
+            android:layout_alignParentRight="true"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:tag="noFav"/>
+
+    </RelativeLayout>
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -42,7 +63,6 @@
 
         <SeekBar
             android:id="@+id/progressBar"
-            style="@style/Base.Widget.AppCompat.ProgressBar.Horizontal"
             android:layout_width="match_parent"
             android:layout_height="10dp"
             android:layout_marginBottom="10dp"
@@ -63,6 +83,7 @@
             android:layout_below="@id/progressBar"
             android:layout_toRightOf="@id/minuteTextView"
             android:text=":" />
+
         <TextView
             android:id="@+id/SongSecondsTextView"
             android:layout_width="wrap_content"

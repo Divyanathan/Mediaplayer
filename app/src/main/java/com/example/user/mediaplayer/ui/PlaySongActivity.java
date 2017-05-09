@@ -1,12 +1,18 @@
 package com.example.user.mediaplayer.ui;
 
-import android.content.ContentUris;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.net.Uri;
+import android.app.ActivityManager;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
+import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -15,17 +21,15 @@ import android.widget.TextView;
 
 import com.example.user.mediaplayer.R;
 import com.example.user.mediaplayer.custom.RoundedTransformation;
-import com.example.user.mediaplayer.jdo.SongJDO;
+import com.example.user.mediaplayer.dataBase.SongTable;
+import com.example.user.mediaplayer.service.MediaPlayerBoundService;
 import com.example.user.mediaplayer.utility.UtilityClass;
 import com.squareup.picasso.Picasso;
-
-import java.io.IOException;
-import java.util.ArrayList;
 
 public class PlaySongActivity extends AppCompatActivity {
 
 
-    ImageView mSongImage, mPreviousBtnImageView, mNextBtnImageView, mPlayBtnImageView;
+    ImageView mSongImage, mPreviousBtnImageView, mNextBtnImageView, mPlayBtnImageView, mFavourSongImageView, mRepeatSongImageView;
 
     TextView mMinuteTextView, mSecondTextView, mSongDurationTextView;
 
@@ -33,25 +37,38 @@ public class PlaySongActivity extends AppCompatActivity {
 
     SeekBar mSeekBar;
 
-    Handler mHandler = new Handler();
-    int mItemPostion;
+
+    String mSongTitle, mSongArtist, mSongDuration, mSongAlbumm, mSongImgeUri;
+
+    MediaPlayerBoundService mMeadiaPlayerBoundService;
+
+    SongTable mSongTable;
     int mSeekTimer;
+    int mSongId,mIsSongFavourite;
 
     final String TAG = "PlaySongActivity";
-    ArrayList<SongJDO> mSongJDOArrayList;
-    SongJDO mSongJDOobj;
 
-    MediaPlayer mMediaPlayer;
+
+    SharedPreferences mSharedPrefrence;
+    SharedPreferences.Editor mSharedPrefrenceEditor;
+    Intent mStartService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_play_song);
 
+        mSongTable=new SongTable(this);
+        mSongTable.open();
+
+        Log.e(TAG, "onCreate: PlaySongActivity=================");
         mSongImage = (ImageView) findViewById(R.id.PlaysongImage);
         mPreviousBtnImageView = (ImageView) findViewById(R.id.previousBtnImageView);
         mNextBtnImageView = (ImageView) findViewById(R.id.nextBtnImageView);
         mPlayBtnImageView = (ImageView) findViewById(R.id.playBtnImageView);
+
+        mRepeatSongImageView = (ImageView) findViewById(R.id.repeatSong);
+        mFavourSongImageView = (ImageView) findViewById(R.id.favourtieSong);
 
 
         mMinuteTextView = (TextView) findViewById(R.id.minuteTextView);
@@ -61,12 +78,43 @@ public class PlaySongActivity extends AppCompatActivity {
         mSongTitleTextView = (TextView) findViewById(R.id.titleTextView);
         mSongArtistTextView = (TextView) findViewById(R.id.artistTextView);
 
+        mStartService = new Intent(PlaySongActivity.this, MediaPlayerBoundService.class);
+
+        mSharedPrefrence = getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE, Context.MODE_PRIVATE);
+
+        String lCurrentSongState=mSharedPrefrence.getString(UtilityClass.REPEAT_SONG,UtilityClass.REPEAT_SONG_OFF);
+
+        if (lCurrentSongState.equals(UtilityClass.REPEAT_SONG_OFF)) {
+
+            setRepeatSongImage(R.drawable.repeat_off);
+
+        } else if (lCurrentSongState.equals(UtilityClass.REPEAT_SONG_ONCE)) {
+
+            setRepeatSongImage(R.drawable.repeat_once);
+
+        } else {
+
+            setRepeatSongImage(R.drawable.repeat_all);
+
+        }
 
 
+        if (isMediaPlayerServiceRunning(MediaPlayerBoundService.class)) {
 
-        mItemPostion = getIntent().getIntExtra(UtilityClass.RECYCLER_ITEM_POSITION, 0);
+            Log.d(TAG, "=======Service is running: ");
+            stopService(mStartService);
 
-        mSongJDOArrayList = (ArrayList<SongJDO>) getIntent().getSerializableExtra(UtilityClass.SONG_JDO_ARRAY_LIST);
+        }
+        Log.d(TAG, "===========start the service: ");
+        startService(mStartService);
+        bindService(mStartService, mServiceConnection, Context.BIND_AUTO_CREATE);
+
+
+        /**
+         *          Registring the Broadcast Reciver
+         */
+        LocalBroadcastManager.getInstance(this).registerReceiver(mSongBroadCastReciver,
+                new IntentFilter(UtilityClass.PASS_SONG_VALUE_INTENT));
 
         mSeekBar = (SeekBar) findViewById(R.id.progressBar);
 
@@ -74,11 +122,10 @@ public class PlaySongActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 
-                if(mMediaPlayer != null && fromUser){
-                    mSeekTimer=progress;
-                    mSecondTextView.setText(""+((progress/1000)%60));
-                    mMinuteTextView.setText(""+(progress/60000));
-                }
+                mSeekTimer = progress;
+                mSecondTextView.setText("" + ((progress / 1000) % 60));
+                mMinuteTextView.setText("" + (progress / 60000));
+
 
             }
 
@@ -90,15 +137,9 @@ public class PlaySongActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
 
-                mMediaPlayer.seekTo(mSeekTimer);
+                mMeadiaPlayerBoundService.seekMeadiaPlayer(mSeekTimer);
             }
         });
-
-        /**
-         *          start the song
-         */
-
-        playSong(mItemPostion);
 
 
         /**
@@ -110,16 +151,11 @@ public class PlaySongActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                if (!mMediaPlayer.isPlaying()) {
-
-                    mMediaPlayer.start();
+                if (!mMeadiaPlayerBoundService.pauseSong()) {
                     setPlayBtnImage(R.drawable.pause);
-
                 } else {
 
                     setPlayBtnImage(R.drawable.play);
-                    mMediaPlayer.pause();
-
                 }
 
             }
@@ -133,13 +169,9 @@ public class PlaySongActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                stopTheSong();
-
-                if (++mItemPostion == mSongJDOArrayList.size()) {
-                    mItemPostion = 0;
-                }
-                playSong(mItemPostion);
-
+                Boolean lIsPressedByUser=true;
+                mSeekBar.setProgress(0);
+                mMeadiaPlayerBoundService.playNextSong(lIsPressedByUser);
 
             }
         });
@@ -153,131 +185,143 @@ public class PlaySongActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-
-                stopTheSong();
-
-
-                if (mItemPostion == 0) {
-                    mItemPostion = mSongJDOArrayList.size();
-                }
-                playSong(--mItemPostion);
+                mSeekBar.setProgress(0);
+                mMeadiaPlayerBoundService.playPreviousSong();
 
 
             }
         });
-
 
         /**
-         *          set the Seek bar progress
+         *      click event For rpeatSong
          */
-
-        runOnUiThread(new Runnable() {
+        mRepeatSongImageView.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void run() {
-                if (mMediaPlayer != null) {
+            public void onClick(View v) {
 
-                    if (mMediaPlayer.isPlaying()) {
-                        int lMinute, lSeconds;
-                        lMinute = Integer.parseInt(mMinuteTextView.getText().toString());
-                        lSeconds = Integer.parseInt(mSecondTextView.getText().toString());
-                        if (lSeconds == 59) {
-                            mSecondTextView.setText("00");
-                            mMinuteTextView.setText("" + (lMinute + 1));
-                        } else {
-                            mSecondTextView.setText("" + (lSeconds + 1));
-                        }
+                String lCurrenctStat = mSharedPrefrence.getString(UtilityClass.REPEAT_SONG, UtilityClass.REPEAT_SONG_OFF);
+                mSharedPrefrenceEditor = mSharedPrefrence.edit();
+                if (lCurrenctStat.equals(UtilityClass.REPEAT_SONG_OFF)) {
 
-                        int lCurrentTime = (mMediaPlayer.getCurrentPosition());
-                        mSeekBar.setProgress(lCurrentTime);
-                        Log.e(TAG, "run:  " + mMediaPlayer.getCurrentPosition() / 1000 + "\n" + mMediaPlayer.getDuration());
-                    }
+                    setRepeatSongImage(R.drawable.repeat_once);
+                    mSharedPrefrenceEditor.putString(UtilityClass.REPEAT_SONG, UtilityClass.REPEAT_SONG_ONCE);
 
-
-                    mHandler.postDelayed(this, 1000);
+                } else if (lCurrenctStat.equals(UtilityClass.REPEAT_SONG_ONCE)) {
+                    setRepeatSongImage(R.drawable.repeat_all);
+                    mSharedPrefrenceEditor.putString(UtilityClass.REPEAT_SONG, UtilityClass.REPEAT_SONG_ALL);
+                } else {
+                    setRepeatSongImage(R.drawable.repeat_off);
+                    mSharedPrefrenceEditor.putString(UtilityClass.REPEAT_SONG, UtilityClass.REPEAT_SONG_OFF);
                 }
-
+                mSharedPrefrenceEditor.commit();
 
             }
         });
 
+        /**
+         *          click Event for  favourite song
+         */
+        mFavourSongImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+
+                if (mSongTable.getFavrotieSong(""+mSongId)==0){
+                    setFavoreSongImage(R.drawable.favourite_song);
+                    mIsSongFavourite=1;
+                    mSongTable.updateFavroutieSong(""+mSongId,1);
+                }else {
+                    setFavoreSongImage(R.drawable.favourite);
+                    mIsSongFavourite=0;
+                    mSongTable.updateFavroutieSong(""+mSongId,0);
+                }
+
+            }
+        });
+
+
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
 
+
+    }
 
     /**
-     * Stop the Song
+     * BroadCast Reciver to recive the song Details
      */
 
-    void stopTheSong() {
-        mMediaPlayer.stop();
-        mMediaPlayer.release();
-    }
 
-    /***
-     *
-     * @param pSongPosition Song Position in the RecyclerView List
-     *
-     *                      This method is used play a particular song
-     */
-
-    void playSong(int pSongPosition) {
+    BroadcastReceiver mSongBroadCastReciver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent pIntent) {
 
 
+            if (pIntent.getBooleanExtra(UtilityClass.SENDING_SONG_TIME, false)) {
 
-        mMinuteTextView.setText("0");
-        mSecondTextView.setText("0");
 
-        mSeekBar.setProgress(0);
+                int lSongCurrentPosition = pIntent.getIntExtra(UtilityClass.SENDING_SONG_POSITION, 0);
+                mSeekBar.setProgress(lSongCurrentPosition);
+                mMinuteTextView.setText("" + lSongCurrentPosition / 60000);
+                mSecondTextView.setText("" + (lSongCurrentPosition / 1000) % 60);
+                Log.d(TAG, "+++++++++++++++run:set Duration: " + (lSongCurrentPosition / 60) + " sec" + (lSongCurrentPosition / 60) % 60);
 
-        setPlayBtnImage(R.drawable.pause);
+            } else if(pIntent.getBooleanExtra(UtilityClass.IS_ALL_SONG_PLAYED,false)){
 
-        SongJDO lSongJDo = mSongJDOArrayList.get(pSongPosition);
-
-        Uri contentUri = ContentUris.withAppendedId(
-                android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Long.parseLong(lSongJDo.getmSongId()));
-
-        mMediaPlayer = new MediaPlayer();
-        mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-
-        mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer pMediaPlayer) {
-
-                pMediaPlayer.start();
-            }
-        });
-
-        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-
-                if (++mItemPostion != mSongJDOArrayList.size()) {
-                    playSong(mItemPostion);
-                }
+                setPlayBtnImage(R.drawable.play);
 
             }
-        });
+            else {
+                Log.e(TAG, "onReceive: ");
+                mSongId=pIntent.getIntExtra(UtilityClass.SONG_ID,1);
+                mSongTitle = pIntent.getStringExtra(UtilityClass.SONG_TITLE);
+                mSongArtist = pIntent.getStringExtra(UtilityClass.SONG_ARTIST);
+                mSongDuration = pIntent.getStringExtra(UtilityClass.SONG_DURATION);
+                mSongAlbumm = pIntent.getStringExtra(UtilityClass.SONG_ALBUM);
+                mSongImgeUri = pIntent.getStringExtra(UtilityClass.SONG_IMAGE);
+                mIsSongFavourite=pIntent.getIntExtra(UtilityClass.FAOURTIE_SONG,0);
 
-        try {
-            mMediaPlayer.setDataSource(getApplicationContext(), contentUri);
-            mMediaPlayer.prepareAsync();
-//                    mMediaPlayer.start();
-        } catch (IOException e) {
-            e.printStackTrace();
+                mSeekBar.setProgress(0);
+                setDetails();
+            }
+
+
         }
+    };
 
+    /**
+     * Set the song details
+     */
+    void setDetails() {
+        Log.e(TAG, "setDetails: ");
+        mSongTitleTextView.setText(mSongTitle);
+        mSongArtistTextView.setText(mSongAlbumm);
+        int lSongDuration = Integer.parseInt(mSongDuration);
+        mSongDurationTextView.setText("" + (lSongDuration / 60000) + ":" + (lSongDuration / 1000) % 60);
 
-        mSongTitleTextView.setText(lSongJDo.getmSongTitel());
+        Picasso.with(PlaySongActivity.this)
+                .load(mSongImgeUri)
+                .placeholder(R.drawable.song)
+                .resize(200, 200)
+                .into(mSongImage);
 
-        mSongArtistTextView.setText(lSongJDo.getmSongArtist());
-
-        int lSongDuration = Integer.parseInt(lSongJDo.getmSongDuration());
-        mSongDurationTextView.setText("" + (lSongDuration) / 60000 + ":" + ((lSongDuration) / 1000) % 60);
-
-        mSeekBar.setMax(Integer.parseInt(lSongJDo.getmSongDuration()));
-
+        mSeekBar.setMax(lSongDuration);
+        if (mIsSongFavourite==0){
+            setFavoreSongImage(R.drawable.favourite);
+        }else {
+            setFavoreSongImage(R.drawable.favourite_song);
+        }
     }
 
+
+    void setRepeatSongImage(int pImageId) {
+        Picasso.with(PlaySongActivity.this)
+                .load(pImageId)
+                .resize(200, 200)
+                .into(mRepeatSongImageView);
+    }
 
     /**
      * set the play Button Image as Play/Pause
@@ -290,21 +334,63 @@ public class PlaySongActivity extends AppCompatActivity {
                 .load("load default image")
                 .placeholder(pImageId)
                 .resize(200, 200)
-                .transform(new RoundedTransformation(100, 1))
                 .into(mPlayBtnImageView);
     }
+    void setFavoreSongImage(int pImageId) {
+
+
+        Picasso.with(PlaySongActivity.this)
+                .load("load default image")
+                .placeholder(pImageId)
+                .resize(200, 200)
+                .into(mFavourSongImageView);
+    }
+
+    ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+
+            MediaPlayerBoundService.LocalBinder lLocalBinder = (MediaPlayerBoundService.LocalBinder) service;
+            mMeadiaPlayerBoundService = lLocalBinder.getService();
+
+
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
 
 
     @Override
     protected void onDestroy() {
+
+
+        unbindService(mServiceConnection);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mSongBroadCastReciver);
         super.onDestroy();
-        mHandler.removeCallbacksAndMessages(null);
-        stopTheSong();
     }
 
     @Override
     public void onBackPressed() {
+
+        Intent lIntent=new Intent();
+        setResult(RESULT_OK,lIntent);
         super.onBackPressed();
-        overridePendingTransition(R.anim.slide_in_right,R.anim.slide_out_right);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_right);
+
+    }
+
+    boolean isMediaPlayerServiceRunning(Class<?> pServiceClass) {
+
+        ActivityManager lActivityManger = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo lRunningService : lActivityManger.getRunningServices(Integer.MAX_VALUE)) {
+
+            if (pServiceClass.getName().equals(lRunningService.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
