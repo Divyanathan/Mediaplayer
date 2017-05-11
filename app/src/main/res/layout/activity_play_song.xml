@@ -1,24 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+
+    android:id="@+id/playerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginBottom="5dp"
-    android:layout_marginLeft="15dp"
-    android:layout_marginRight="15dp"
-    android:layout_marginTop="10dp"
+    android:background="@color/colorDark"
     android:orientation="vertical"
+    android:paddingBottom="5dp"
+    android:paddingLeft="15dp"
+    android:paddingRight="15dp"
+    android:paddingTop="10dp"
     tools:context="com.example.user.mediaplayer.ui.PlaySongActivity">
 
-    <ImageView
-        android:id="@+id/PlaysongImage"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="30dp"
-        android:layout_weight="4"
-        android:scaleType="centerCrop"
-        android:background="@drawable/border"
-        android:src="@drawable/song" />
+        android:layout_weight="4">
+        <ImageView
+            android:id="@+id/PlaysongImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/border"
+            android:paddingTop="30dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/song" />
+        <ImageView
+            android:id="@+id/PlaysongImageDuplicate"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/border"
+            android:paddingTop="30dp"
+            android:scaleType="centerCrop"
+            android:visibility="invisible"
+            android:src="@drawable/song" />
+
+    </RelativeLayout>
+
 
     <TextView
         android:id="@+id/titleTextView"
@@ -27,7 +45,8 @@
         android:layout_marginBottom="10dp"
         android:layout_marginTop="10dp"
         android:text="Title"
-        android:textAlignment="center" />
+        android:textAlignment="center"
+        android:textColor="@color/colorWhite" />
 
     <TextView
         android:id="@+id/artistTextView"
@@ -36,24 +55,27 @@
         android:layout_marginBottom="10dp"
         android:layout_marginTop="10dp"
         android:text="artist"
-        android:textAlignment="center" />
+        android:textAlignment="center"
+        android:textColor="@color/colorWhite" />
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="40dp">
+
         <ImageView
             android:id="@+id/repeatSong"
-            android:src="@drawable/repeat_off"
-            android:layout_alignParentLeft="true"
-            android:layout_width="40dp"
-            android:layout_height="match_parent" />
-        <ImageView
-            android:id="@+id/favourtieSong"
-            android:src="@drawable/favourite_song"
-            android:layout_alignParentRight="true"
             android:layout_width="40dp"
             android:layout_height="match_parent"
-            android:tag="noFav"/>
+            android:layout_alignParentLeft="true"
+            android:src="@drawable/repeat_off" />
+
+        <ImageView
+            android:id="@+id/favourtieSong"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentRight="true"
+            android:src="@drawable/favourite_song"
+            android:tag="noFav" />
 
     </RelativeLayout>
 
@@ -66,6 +88,8 @@
             android:layout_width="match_parent"
             android:layout_height="10dp"
             android:layout_marginBottom="10dp"
+            android:layout_marginLeft="-10dp"
+            android:layout_marginRight="-10dp"
             android:layout_marginTop="10dp" />
 
         <TextView
@@ -74,7 +98,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
             android:layout_below="@id/progressBar"
-            android:text="0" />
+            android:text="0"
+            android:textColor="@color/colorWhite" />
 
         <TextView
             android:id="@+id/dividerTextView"
@@ -82,7 +107,8 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/progressBar"
             android:layout_toRightOf="@id/minuteTextView"
-            android:text=":" />
+            android:text=":"
+            android:textColor="@color/colorWhite" />
 
         <TextView
             android:id="@+id/SongSecondsTextView"
@@ -90,7 +116,8 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/progressBar"
             android:layout_toRightOf="@id/dividerTextView"
-            android:text="0" />
+            android:text="0"
+            android:textColor="@color/colorWhite" />
 
         <TextView
             android:id="@+id/durationTextView"
@@ -98,7 +125,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:layout_below="@id/progressBar"
-            android:text="4:49" />
+            android:text="4:49"
+            android:textColor="@color/colorWhite" />
     </RelativeLayout>
 
     <LinearLayout
@@ -112,6 +140,7 @@
             android:layout_width="0dp"
             android:layout_height="50dp"
             android:layout_weight="1"
+            android:onClick="onFavriteItemClick"
             android:src="@drawable/previous" />
 
         <ImageView

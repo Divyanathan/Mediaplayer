@@ -8,6 +8,7 @@ import java.io.Serializable;
 
 public class SongJDO implements Serializable {
 
+    int mColumnId;
     String mSongId;
     String mSongTitel;
     String mSongArtist;
@@ -16,7 +17,8 @@ public class SongJDO implements Serializable {
     String mSongImage;
     int mFavourite;
 
-    public SongJDO(String mSongId, String mSongTitel, String mSongArtist, String mSongDuration, String mSongAlbum, String mSongImage,int pFavourite) {
+    public SongJDO(int mColumnId,String mSongId, String mSongTitel, String mSongArtist, String mSongDuration, String mSongAlbum, String mSongImage,int pFavourite) {
+        this.mColumnId=mColumnId;
         this.mSongId = mSongId;
         this.mSongTitel = mSongTitel;
         this.mSongArtist = mSongArtist;
@@ -26,6 +28,13 @@ public class SongJDO implements Serializable {
         this.mFavourite=pFavourite;
     }
 
+    public int getmColumnId() {
+        return mColumnId;
+    }
+
+    public void setmColumnId(int mColumnId) {
+        this.mColumnId = mColumnId;
+    }
 
     public String getmSongAlbum() {
         return mSongAlbum;

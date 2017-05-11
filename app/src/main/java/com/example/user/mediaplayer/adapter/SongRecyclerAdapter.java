@@ -2,6 +2,7 @@ package com.example.user.mediaplayer.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,9 +26,12 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
     Context mContext;
     SongJDO mSongJDOobj;
 
+    private static final String TAG = "SongRecyclerAdapter";
+
     public SongRecyclerAdapter(Context mContext, ArrayList<SongJDO> mSongJDOArrayList) {
         this.mSongJDOArrayList = mSongJDOArrayList;
         this.mContext = mContext;
+        Log.d(TAG, "SongRecyclerAdapter: constructor");
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
@@ -35,6 +39,7 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
         TextView sSongIdTextView, sTitleTextView, sArtistTextView;
         ImageView sSongImageView,sFavourImageView;
 
+        
 //        Context sContext;
 
         public MyViewHolder(View itemView) {
@@ -46,6 +51,7 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
 
             sSongImageView = (ImageView) itemView.findViewById(R.id.songImage);
             sFavourImageView = (ImageView) itemView.findViewById(R.id.favourite);
+            Log.d(TAG, "MyViewHolder:  constructor");
         }
     }
 
@@ -55,6 +61,7 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
         View lView = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.recycler_view_list_item, parent, false);
 
+        Log.d(TAG, "onCreateViewHolder: ");
         return new SongRecyclerAdapter.MyViewHolder(lView);
     }
 
@@ -80,15 +87,26 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
                     .resize(800, 800)
                     .into(holder.sFavourImageView);
         }else {
-            holder.sFavourImageView.setVisibility(View.GONE);
+            holder.sFavourImageView.setVisibility(View.VISIBLE);
+            Picasso.with(mContext)
+                    .load(R.drawable.favourite)
+                    .centerCrop()
+                    .resize(800, 800)
+                    .into(holder.sFavourImageView);
         }
 
+        Log.d(TAG, "onBindViewHolder: ");
     }
 
     @Override
     public int getItemCount() {
+        Log.d(TAG, "getItemCount: ");
         return mSongJDOArrayList.size();
     }
 
+
+    public  SongJDO getSongDetails(int pPosition){
+       return  mSongJDOArrayList.get(pPosition);
+    }
 
 }
