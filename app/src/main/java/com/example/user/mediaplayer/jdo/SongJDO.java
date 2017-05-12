@@ -16,8 +16,9 @@ public class SongJDO implements Serializable {
     String mSongAlbum;
     String mSongImage;
     int mFavourite;
+    boolean mIsThisSongPlaying=false;
 
-    public SongJDO(int mColumnId,String mSongId, String mSongTitel, String mSongArtist, String mSongDuration, String mSongAlbum, String mSongImage,int pFavourite) {
+    public SongJDO(int mColumnId,String mSongId, String mSongTitel, String mSongArtist, String mSongDuration, String mSongAlbum, String mSongImage,int pFavourite,boolean mIsThisSongPlaying) {
         this.mColumnId=mColumnId;
         this.mSongId = mSongId;
         this.mSongTitel = mSongTitel;
@@ -26,10 +27,19 @@ public class SongJDO implements Serializable {
         this.mSongAlbum = mSongAlbum;
         this.mSongImage = mSongImage;
         this.mFavourite=pFavourite;
+        this.mIsThisSongPlaying=mIsThisSongPlaying;
     }
 
     public int getmColumnId() {
         return mColumnId;
+    }
+
+    public boolean getIsmIsThisSongPlaying() {
+        return mIsThisSongPlaying;
+    }
+
+    public void setmIsThisSongPlaying(boolean mIsThisSongPlaying) {
+        this.mIsThisSongPlaying = mIsThisSongPlaying;
     }
 
     public void setmColumnId(int mColumnId) {

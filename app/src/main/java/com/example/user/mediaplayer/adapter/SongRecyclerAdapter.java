@@ -1,6 +1,7 @@
 package com.example.user.mediaplayer.adapter;
 
 import android.content.Context;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,6 +12,7 @@ import android.widget.TextView;
 
 import com.example.user.mediaplayer.R;
 import com.example.user.mediaplayer.jdo.SongJDO;
+import com.example.user.mediaplayer.utility.UtilityClass;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -25,6 +27,7 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
     ArrayList<SongJDO> mSongJDOArrayList;
     Context mContext;
     SongJDO mSongJDOobj;
+    MyViewHolder mMyViewHolder;
 
     private static final String TAG = "SongRecyclerAdapter";
 
@@ -62,7 +65,8 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
                 .inflate(R.layout.recycler_view_list_item, parent, false);
 
         Log.d(TAG, "onCreateViewHolder: ");
-        return new SongRecyclerAdapter.MyViewHolder(lView);
+        mMyViewHolder= new SongRecyclerAdapter.MyViewHolder(lView);
+        return mMyViewHolder;
     }
 
     @Override
@@ -72,6 +76,18 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
         holder.sSongIdTextView.setText(mSongJDOobj.getmSongId());
         holder.sTitleTextView.setText(mSongJDOobj.getmSongTitel());
         holder.sArtistTextView.setText(mSongJDOobj.getmSongAlbum());
+        int lSongPosition=mContext.getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE,Context.MODE_PRIVATE).getInt(UtilityClass.SONG_POSITION_SET_COLOR,-1);
+
+        if(lSongPosition==position){
+
+            Log.d(TAG, "onBindViewHolder: song_is_playing"+" "+mSongJDOobj.getmColumnId()+" "+mSongJDOobj.getmSongTitel()+" "+holder.sArtistTextView.getText().toString());
+            holder.sTitleTextView.setTextColor(ContextCompat.getColor(mContext,R.color.colorPrimary));
+            holder.sArtistTextView.setTextColor(ContextCompat.getColor(mContext,R.color.colorPrimary));
+        } else {
+            Log.d(TAG, "onBindViewHolder: song_is_playing"+" "+mSongJDOobj.getmColumnId()+" "+mSongJDOobj.getmSongTitel()+" "+holder.sArtistTextView.getText().toString());
+            holder.sTitleTextView.setTextColor(ContextCompat.getColor(mContext,R.color.colorWhite));
+            holder.sArtistTextView.setTextColor(ContextCompat.getColor(mContext,R.color.colorWhite));
+        }
 
         Picasso.with(mContext).load(mSongJDOobj.getmSongImage())
                 .centerCrop()
@@ -108,5 +124,6 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
     public  SongJDO getSongDetails(int pPosition){
        return  mSongJDOArrayList.get(pPosition);
     }
+
 
 }

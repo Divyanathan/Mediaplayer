@@ -49,7 +49,8 @@ public class MediaPlayerBoundService extends Service {
     SongJDO mSongJDObject;
     Boolean mIsAllSongPlayed = false;
     Boolean mIsSongDetailsAvailable = false;
-    ArrayList<SongJDO> mSongJDOArrayList = new ArrayList<SongJDO>();;
+    ArrayList<SongJDO> mSongJDOArrayList = new ArrayList<SongJDO>();
+
     private static final String TAG = "MediaPlayerBoundService";
 
     @Override
@@ -62,6 +63,10 @@ public class MediaPlayerBoundService extends Service {
 
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE,Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(UtilityClass.IS_SONG_PLAYING,true)
+                .commit();
 
         /**
          * this method will get call once the media player comes to on prepared state then we can play the song from here
@@ -72,6 +77,8 @@ public class MediaPlayerBoundService extends Service {
                 Log.d(TAG, "testonPrepared: =================");
                 pMediaPlayer.start();
 
+                Log.d(TAG, "onPrepared: song_is_playing " + mSongColumnId);
+
                 if (mIsAllSongPlayed) {
                     pauseSong();
                     mTimer.cancel();
@@ -79,11 +86,16 @@ public class MediaPlayerBoundService extends Service {
                     mPassSongValueIntent.putExtra(UtilityClass.IS_ALL_SONG_PLAYED, true);
                     LocalBroadcastManager.getInstance(MediaPlayerBoundService.this).sendBroadcast(mPassSongValueIntent);
                     mIsAllSongPlayed = false;
+                    mSongJDOArrayList.get(mSongColumnId).setmIsThisSongPlaying(false);
                 }
+
                 SharedPreferences mSharedPrefrence = getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE, MODE_PRIVATE);
                 SharedPreferences.Editor lSharedPrefreceEditor = mSharedPrefrence.edit();
-                lSharedPrefreceEditor.putInt(UtilityClass.CURRENTLY_PLAYING_SONG, Integer.parseInt(mSongJDOArrayList.get(mSongColumnId).getmSongId()));
-                Log.d(TAG, " test OnPreprerd: "+mSongColumnId);
+                lSharedPrefreceEditor.putInt(UtilityClass.CURRENTLY_PLAYING_SONG,Integer.parseInt(mSongJDOArrayList.get(mSongColumnId).getmSongId()));
+                lSharedPrefreceEditor.putInt(UtilityClass.SONG_POSITION_SET_COLOR, mSongColumnId);
+                sendBroadCastToRecylerList();
+
+                Log.d(TAG, " test OnPreprerd: " + mSongColumnId);
                 lSharedPrefreceEditor.commit();
 
             }
@@ -102,7 +114,7 @@ public class MediaPlayerBoundService extends Service {
                     mMediaPlayer.reset();
                     mTimer.cancel();
                     playTheSong(Integer.parseInt(mSongJDOArrayList.get(mSongColumnId).getmSongId()));
-                    Log.d(TAG, " test Oncomplete: "+mSongColumnId);
+                    Log.d(TAG, " test Oncomplete: " + mSongColumnId);
                 } else {
                     mMediaPlayer.reset();
                     playNextSong(lIsPressedByUser);
@@ -130,7 +142,6 @@ public class MediaPlayerBoundService extends Service {
     }
 
     /**
-     *
      * @param intent
      * @param flags
      * @param startId
@@ -145,9 +156,7 @@ public class MediaPlayerBoundService extends Service {
 
 
     /**
-     *
-     * @param pSongId
-     * play the song
+     * @param pSongId play the song
      */
     public void playTheSong(final int pSongId) {
 
@@ -245,7 +254,6 @@ public class MediaPlayerBoundService extends Service {
 
 
     /**
-     *
      * @param pIsPressedByUser which will help us to play the first song wen the user next button wen the last song is playing
      */
     public void playNextSong(Boolean pIsPressedByUser) {
@@ -257,32 +265,25 @@ public class MediaPlayerBoundService extends Service {
 
         if (lSongCurrentStat.equals(UtilityClass.REPEAT_SONG_OFF)) {
             if (pIsPressedByUser && mSongColumnId == mNumberOfSongs) {
-                mSongColumnId=0;
+                mSongColumnId = 0;
                 playTheSong(Integer.parseInt(mSongJDOArrayList.get(mSongColumnId).getmSongId()));
-                Log.d(TAG, " test 1: "+mSongColumnId);
             } else if (mSongColumnId < mNumberOfSongs) {
                 playTheSong(Integer.parseInt(mSongJDOArrayList.get(++mSongColumnId).getmSongId()));
-                Log.d(TAG, " test 2: "+mSongColumnId);
             } else {
-                mSongColumnId=0;
+                mSongColumnId = 0;
                 playTheSong(Integer.parseInt(mSongJDOArrayList.get(mSongColumnId).getmSongId()));
-                Log.d(TAG, " test 3: "+mSongColumnId);
                 mIsAllSongPlayed = true;
                 stopSelf();
             }
         } else if (lSongCurrentStat.equals(UtilityClass.REPEAT_SONG_ALL)) {
             if (mSongColumnId == mNumberOfSongs) {
                 mSongColumnId = 0;
-                Log.d(TAG, " test 4: "+mSongColumnId);
-            }else {
+            } else {
                 ++mSongColumnId;
-                Log.d(TAG, " test 5: "+mSongColumnId+" "+mNumberOfSongs);
             }
             playTheSong(Integer.parseInt(mSongJDOArrayList.get(mSongColumnId).getmSongId()));
-            Log.d(TAG, " test 6: "+mSongColumnId);
         } else {
             playTheSong(Integer.parseInt(mSongJDOArrayList.get(++mSongColumnId).getmSongId()));
-            Log.d(TAG, " test 7: "+mSongColumnId);
         }
     }
 
@@ -293,9 +294,8 @@ public class MediaPlayerBoundService extends Service {
 
         if (mSongColumnId > 0) {
             playTheSong(Integer.parseInt(mSongJDOArrayList.get(--mSongColumnId).getmSongId()));
-            Log.d(TAG, " test 8: "+mSongColumnId);
-        }else {
-            mSongColumnId=mNumberOfSongs;
+        } else {
+            mSongColumnId = mNumberOfSongs;
             playTheSong(Integer.parseInt(mSongJDOArrayList.get(mSongColumnId).getmSongId()));
         }
     }
@@ -318,10 +318,11 @@ public class MediaPlayerBoundService extends Service {
                 mSongAlbumm = lGetSongCursor.getString(lGetSongCursor.getColumnIndex(mSongTable.SONG_ALBUM));
                 mSongImgeUri = lGetSongCursor.getString(lGetSongCursor.getColumnIndex(mSongTable.SONG_IMAGE));
                 mSongFavourite = lGetSongCursor.getInt(lGetSongCursor.getColumnIndex(mSongTable.SONG_FAVOURITE));
-                mSongJDObject = new SongJDO(lSongsColumnId, "" + lSongsId, mSongTitle, mSongArtist, mSongDuration, mSongAlbumm, mSongImgeUri, mSongFavourite);
+                Boolean lIsSongPlaying=false;
+                mSongJDObject = new SongJDO(lSongsColumnId, "" + lSongsId, mSongTitle, mSongArtist, mSongDuration, mSongAlbumm, mSongImgeUri, mSongFavourite,lIsSongPlaying);
                 mSongJDOArrayList.add(mSongJDObject);
             } while (lGetSongCursor.moveToNext());
-            mNumberOfSongs = mSongJDOArrayList.size()-1;
+            mNumberOfSongs = mSongJDOArrayList.size() - 1;
         }
     }
 
@@ -336,13 +337,11 @@ public class MediaPlayerBoundService extends Service {
     }
 
     /**
-     *
-     * @param pColumnId
-     * set the colum id from the activity
+     * @param pColumnId set the colum id from the activity
      */
     public void setSongColumID(int pColumnId) {
         mSongColumnId = pColumnId;
-        Log.d(TAG, " test setSongColumID: "+mSongColumnId);
+        Log.d(TAG, " test setSongColumID: " + mSongColumnId);
     }
 
     /***
@@ -352,7 +351,7 @@ public class MediaPlayerBoundService extends Service {
 
         Intent mPassSongValueIntent = new Intent(UtilityClass.PASS_SONG_VALUE_INTENT);
         mSongJDObject = mSongJDOArrayList.get(mSongColumnId);
-        Log.d(TAG, " test send value: "+mSongColumnId);
+        Log.d(TAG, " test send value: " + mSongColumnId);
         mPassSongValueIntent.putExtra(UtilityClass.SONG_ID, mSongId);
         mPassSongValueIntent.putExtra(UtilityClass.SONG_TITLE, mSongJDObject.getmSongTitel());
         mPassSongValueIntent.putExtra(UtilityClass.SONG_ARTIST, mSongJDObject.getmSongArtist());
@@ -365,43 +364,47 @@ public class MediaPlayerBoundService extends Service {
     }
 
     /**
-     *
-     * @param pFavourite
-     * set the favour value from the activity
+     * @param pFavourite set the favour value from the activity
      */
-    public  void setFavourite(int pFavourite){
+    public void setFavourite(int pFavourite) {
 
         mSongJDOArrayList.get(mSongColumnId).setmFavourite(pFavourite);
     }
 
     /**
-     *
      * @return returns the favourite value to the activity for the current song which is playing
      */
-    public  int getFavourite(){
-        Log.d(TAG, "getSongsFromSQLite  service"+mSongJDOArrayList.get(mSongColumnId).getmSongId());
+    public int getFavourite() {
+        Log.d(TAG, "getSongsFromSQLite  service" + mSongJDOArrayList.get(mSongColumnId).getmSongId());
         return mSongJDOArrayList.get(mSongColumnId).getmFavourite();
     }
 
     /**
-     *
      * @return returns the current playing song id to activity
      */
-    public String getSongId(){
-        return ""+mSongJDOArrayList.get(mSongColumnId).getmSongId();
+    public String getSongId() {
+        return "" + mSongJDOArrayList.get(mSongColumnId).getmSongId();
     }
 
     /**
      * reload the datat base once the favourite value is changed
      */
-    public void reloadTheDataBase()
-    {
-     mSongJDOArrayList.clear();
+    public void reloadTheDataBase() {
+        mSongJDOArrayList.clear();
         getSongsFromSQLite();
     }
 
     /**
-     *
+     * sends the broadcast to Recycler view list activity so it will highlight the song which is playing
+     */
+    void sendBroadCastToRecylerList() {
+        Intent sendBroadCastIntent = new Intent(UtilityClass.SEND_BROADCAST_TO_RECYLER_LIST);
+        sendBroadCastIntent.putExtra(UtilityClass.SONG_COLUMN_ID, getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE,Context.MODE_PRIVATE).getInt(UtilityClass.SONG_POSITION_SET_COLOR,mSongJDOArrayList.size()));
+        LocalBroadcastManager.getInstance(this).sendBroadcast(sendBroadCastIntent);
+
+    }
+
+    /**
      * @param intent
      * @return Ibinder which helps us to interact withe the activity and the service
      */
@@ -419,7 +422,7 @@ public class MediaPlayerBoundService extends Service {
     @Override
     public boolean onUnbind(Intent intent) {
         Log.e(TAG, "onUnbind: =================");
-        if(!mMediaPlayer.isPlaying()){
+        if (!mMediaPlayer.isPlaying()) {
             stopSelf();
         }
         return true;
@@ -430,7 +433,13 @@ public class MediaPlayerBoundService extends Service {
         Log.e(TAG, "onDestroy: =================");
         mMediaPlayer.stop();
         mMediaPlayer.release();
+        getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(UtilityClass.IS_SONG_PLAYING, false)
+                .putInt(UtilityClass.CURRENTLY_PLAYING_SONG,-1)
+                .commit();
         super.onDestroy();
 
     }
+
 }

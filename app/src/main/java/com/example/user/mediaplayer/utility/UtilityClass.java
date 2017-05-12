@@ -42,6 +42,10 @@ public class UtilityClass {
     public static final String CURRENTLY_PLAYING_SONG = "currently_playing_song";
     public static final String SONG_IS_PLAYING_IN_BACKGROUND = "song_is_playing_in_background";
     public static final String IS_DATABASE_UPDATED = "database_updated";
+    public static final String SEND_BROADCAST_TO_RECYLER_LIST="recycler_broadcast";
+    public static final String SONG_POSITION_SET_COLOR ="song_position_set_color";
+    public static final String SONG_POSITION_RESET_COLOR ="song_position_reset_color";
+    public static final String IS_RESET_COLOR_POSITOIN_AVAILABLE ="is_song_position_available_to_rest_color";
 
 
 

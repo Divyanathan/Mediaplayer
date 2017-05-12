@@ -170,8 +170,8 @@ public class PlaySongActivity extends AppCompatActivity {
         mNextBtnImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setTheSongImage(mSongImgeUri);
                 mSongImageDuplicate.setVisibility(View.VISIBLE);
+                setTheSongImage(mSongImgeUri);
 
                 Boolean lIsPressedByUser = true;
                 mSeekBar.setProgress(0);
@@ -372,6 +372,7 @@ public class PlaySongActivity extends AppCompatActivity {
     void setTheSongImage(String pImageUrl) {
         Picasso.with(PlaySongActivity.this)
                 .load(pImageUrl)
+                .placeholder(R.drawable.song)
                 .into(mSongImageDuplicate);
     }
 
@@ -384,7 +385,7 @@ public class PlaySongActivity extends AppCompatActivity {
 
             MediaPlayerBoundService.LocalBinder lLocalBinder = (MediaPlayerBoundService.LocalBinder) service;
             mMeadiaPlayerBoundService = lLocalBinder.getService();
-            mCurrentlyPlayingSong = getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE, Context.MODE_PRIVATE).getInt(UtilityClass.CURRENTLY_PLAYING_SONG, 0);
+            mCurrentlyPlayingSong = getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE, Context.MODE_PRIVATE).getInt(UtilityClass.CURRENTLY_PLAYING_SONG, -1);
 
             /**
              * check the condition to keep the song playing if it is already playing
@@ -431,6 +432,7 @@ public class PlaySongActivity extends AppCompatActivity {
     protected void onDestroy() {
         unbindService(mServiceConnection);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mSongBroadCastReciver);
+        mSongTable.close();
         super.onDestroy();
     }
 
