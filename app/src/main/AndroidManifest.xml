@@ -18,11 +18,23 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.PlaySongActivity">
+        <activity android:name=".ui.PlaySongActivity"
+            android:configChanges="orientation">
+
         </activity>
         <service android:name=".demo.sercvice.DemoMediaPlayerIntentService"/>
         <service android:name=".demo.sercvice.DemoMediaPlayerUnBoundService"/>
         <service android:name=".service.MediaPlayerBoundService"/>
+        <service android:name=".service.MediaPlayerFireBaseService">
+            <intent-filter >
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
+        <service android:name=".service.MediaPlayerInstanceIDService">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
+            </intent-filter>
+        </service>>
     </application>
 
 </manifest>

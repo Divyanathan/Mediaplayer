@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:onClick="onRowClick"
+    android:id="@+id/listLayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="1dp"
     android:layout_marginLeft="8dp"
+    android:onClick="onRowClick"
     android:orientation="vertical">
 
     <LinearLayout
@@ -49,8 +48,8 @@
                         android:id="@+id/songTitle"
                         android:layout_width="match_parent"
                         android:layout_height="20dp"
-                        android:layout_marginTop="10dp"
                         android:layout_marginBottom="5dp"
+                        android:layout_marginTop="10dp"
                         android:paddingLeft="20dp"
                         android:text="tum hi ho"
                         android:textColor="@color/colorWhite"
@@ -60,8 +59,8 @@
                         android:id="@+id/songArtist"
                         android:layout_width="match_parent"
                         android:layout_height="20dp"
-                        android:layout_marginTop="5dp"
                         android:layout_marginBottom="4dp"
+                        android:layout_marginTop="5dp"
                         android:paddingLeft="20dp"
                         android:text="aushique 2"
                         android:textColor="@color/colorWhite"
@@ -74,9 +73,7 @@
                     android:layout_width="30dp"
                     android:layout_height="match_parent"
                     android:onClick="onFavriteItemClick"
-                    android:src="@drawable/favourite"
-                     />
-
+                    android:src="@drawable/favourite" />
 
             </LinearLayout>
 

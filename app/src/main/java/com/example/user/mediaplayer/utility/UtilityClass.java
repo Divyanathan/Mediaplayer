@@ -46,6 +46,9 @@ public class UtilityClass {
     public static final String SONG_POSITION_SET_COLOR ="song_position_set_color";
     public static final String SONG_POSITION_RESET_COLOR ="song_position_reset_color";
     public static final String IS_RESET_COLOR_POSITOIN_AVAILABLE ="is_song_position_available_to_rest_color";
+    public static final String NOTIFICATION_MESSAGE ="notification_message";
+
+    public  static  final  int NOTIFICATION_ID=1;
 
 
 

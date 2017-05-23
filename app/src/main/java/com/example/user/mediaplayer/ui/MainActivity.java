@@ -2,6 +2,7 @@ package com.example.user.mediaplayer.ui;
 
 import android.app.ActivityManager;
 import android.app.LoaderManager;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentUris;
 import android.content.Context;
@@ -25,13 +26,28 @@ import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.example.user.mediaplayer.R;
 import com.example.user.mediaplayer.adapter.SongRecyclerAdapter;
 import com.example.user.mediaplayer.dataBase.SongTable;
 import com.example.user.mediaplayer.jdo.SongJDO;
+import com.example.user.mediaplayer.listener.OnItemClickLisenter;
+import com.example.user.mediaplayer.listener.ReCyclerItemClickListener;
 import com.example.user.mediaplayer.service.MediaPlayerBoundService;
 import com.example.user.mediaplayer.utility.UtilityClass;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseException;
+import com.google.firebase.crash.FirebaseCrash;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
 
@@ -55,12 +71,52 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     boolean mIsSearchingSongs = false;
 
 
+    DatabaseReference lRootDataBaseRef = FirebaseDatabase.getInstance().getReference();
+    DatabaseReference lChildRef = lRootDataBaseRef.child("token");
     private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+//        FirebaseCrash.report( new Exception("This is test exception"));
+
+
+        NotificationManager lNotificationManager= (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        lNotificationManager.cancel(UtilityClass.NOTIFICATION_ID);
+        String lAppToken = FirebaseInstanceId.getInstance().getToken();
+        Log.d(TAG, "onCreate:  token" + lAppToken);
+
+//        lChildRef.setValue(lAppToken);
+
+        lChildRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                Log.d(TAG, "onDataChange: " + dataSnapshot.getValue().toString());
+//                Toast.makeText(MainActivity.this, ""+dataSnapshot.getValue().toString(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+        getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE,Context.MODE_PRIVATE)
+                .edit()
+                .putString(UtilityClass.NOTIFICATION_MESSAGE,null)
+                .commit();
+
+        //this single line is not working
+        FirebaseMessaging.getInstance().subscribeToTopic("news");
+
+
+        if(getIntent().getExtras() != null){
+
+            Log.d(TAG, "data message "+getIntent().getExtras().getString("message"));
+        }
 
         mRecyclerView = (RecyclerView) findViewById(R.id.mediaPlayerRecylerView);
         mRecyclerAdapterLinearLayoutManager = new LinearLayoutManager(this);
@@ -71,9 +127,50 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mSongTable.open();
 
         /**
+         *set the event Single, Double Tab and LongPresscom.google.firebase.INSTANCE_ID_EVENT
+         * it works fine but handling single click and favourite item click takes much time it's getting call on second time only
+         */
+//
+//        mRecyclerView.addOnItemTouchListener(new ReCyclerItemClickListener(MainActivity.this, new OnItemClickLisenter() {
+//            @Override
+//            public void onSingleTab(View pChaildView, final int pItemPosition) {
+//
+//                ImageView lFavouriteBtn = (ImageView) pChaildView.findViewById(R.id.favourite);
+//                LinearLayout lOnItemClcik=(LinearLayout) pChaildView.findViewById(R.id.listLayout);
+//                lFavouriteBtn.setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//
+//                        Log.d(TAG, "onClick: favourite");
+//
+//                    }
+//                });
+//                lOnItemClcik.setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//                        Log.d(TAG, "onClick: item ");
+//                    }
+//                });
+//
+//            }
+//
+//            @Override
+//            public void onDoubleTab(View pChaildView, int pItemPosition) {
+//
+//                Log.d(TAG, "onDoubleTab: ");
+//            }
+//
+//            @Override
+//            public void onLongPress(View pChaildView, int pItemPosition) {
+//
+//                Log.d(TAG, "onLongPress: ");
+//            }
+//        }));
+
+        /**
          * register the broadcast reciver
          */
-        LocalBroadcastManager.getInstance(this).registerReceiver(mSongReceiver,new IntentFilter(UtilityClass.SEND_BROADCAST_TO_RECYLER_LIST));
+        LocalBroadcastManager.getInstance(this).registerReceiver(mSongReceiver, new IntentFilter(UtilityClass.SEND_BROADCAST_TO_RECYLER_LIST));
 
         /**
          * check the song is playing before starting the activity
@@ -118,20 +215,20 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 getSongsFromSQLite();
                 mSearchSongArryList.addAll(mSongJDOArrayList);
 
-                int lsongPosition=getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE,Context.MODE_PRIVATE).getInt(UtilityClass.SONG_POSITION_SET_COLOR,-1);
-
+                int lsongPosition = getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE, Context.MODE_PRIVATE).getInt(UtilityClass.SONG_POSITION_SET_COLOR, -1);
 
                 mSongRecyclerAdapter.getSongDetails(lsongPosition).setmIsThisSongPlaying(true);
-                mSongRecyclerAdapter.notifyItemChanged(lsongPosition);
+                mRecyclerView.scrollToPosition(lsongPosition);
+                mSongRecyclerAdapter.notifyDataSetChanged();
 //                mSearchSongArryList.get(lsongPosition).setmIsThisSongPlaying(true);
 
-                for(SongJDO lSongJddo:mSearchSongArryList){
-                    if(lSongJddo.getIsmIsThisSongPlaying()){
-                        Log.d(TAG, "onActivityResult: song_is_playing loop "+lSongJddo.getmSongId()+" "+lSongJddo.getmSongTitel());
+                for (SongJDO lSongJddo : mSearchSongArryList) {
+                    if (lSongJddo.getIsmIsThisSongPlaying()) {
+                        Log.d(TAG, "onActivityResult: song_is_playing loop " + lSongJddo.getmSongId() + " " + lSongJddo.getmSongTitel());
                     }
                 }
                 mSongRecyclerAdapter.notifyDataSetChanged();
-                Log.d(TAG, "onActivityResult: song_is_playing "+lsongPosition);
+                Log.d(TAG, "onActivityResult: song_is_playing " + lsongPosition);
             }
         }
     }
@@ -153,10 +250,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 mSongAlbumm = lGetSongCursor.getString(lGetSongCursor.getColumnIndex(mSongTable.SONG_ALBUM));
                 mSongImgeUri = lGetSongCursor.getString(lGetSongCursor.getColumnIndex(mSongTable.SONG_IMAGE));
                 mSongFavourite = lGetSongCursor.getInt(lGetSongCursor.getColumnIndex(mSongTable.SONG_FAVOURITE));
-                Boolean lIsSongIsPlaying=false;
-                mSongJDObject = new SongJDO(Integer.parseInt(mSongColumnId), mSongId, mSongTitle, mSongArtist, mSongDuration, mSongAlbumm, mSongImgeUri, mSongFavourite,lIsSongIsPlaying);
+                Boolean lIsSongIsPlaying = false;
+                mSongJDObject = new SongJDO(Integer.parseInt(mSongColumnId), mSongId, mSongTitle, mSongArtist, mSongDuration, mSongAlbumm, mSongImgeUri, mSongFavourite, lIsSongIsPlaying);
                 mSongJDOArrayList.add(mSongJDObject);
-                Log.d(TAG, "getSongsFromSQLite:  activity"+mSongTitle+" "+mSongFavourite);
+                Log.d(TAG, "getSongsFromSQLite:  activity" + mSongTitle + " " + mSongFavourite);
             } while (lGetSongCursor.moveToNext());
         }
 
@@ -285,7 +382,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     boolean isMediaPlayerServiceRunning(Class<?> pServiceClass) {
         ActivityManager lActivityManger = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo lRunningService : lActivityManger.getRunningServices(Integer.MAX_VALUE)) {
-            Log.d(TAG, "isMediaPlayerServiceRunning: "+lRunningService.service.getClassName());
+            Log.d(TAG, "isMediaPlayerServiceRunning: " + lRunningService.service.getClassName());
             if (pServiceClass.getName().equals(lRunningService.service.getClassName())) {
                 return true;
             }
@@ -294,10 +391,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     /**
-     *
      * @param menu
-     * @return
-     * search view listener
+     * @return search view listener
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -334,12 +429,12 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     /**
-     *
-     * @param pView
-     * on_Item_click listener for Recycler view
+     * @param pView on_Item_click listener for Recycler view
      */
 
     public void onRowClick(View pView) {
+
+
         int lPosition = mRecyclerView.getChildLayoutPosition(pView);
         mSongJDObject = mSongRecyclerAdapter.getSongDetails(lPosition);
 
@@ -361,9 +456,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     /**
-     *
-     * @param pView
-     * on_click listener for favourite button
+     * @param pView on_click listener for favourite button
      */
     public void onFavriteItemClick(View pView) {
 
@@ -386,8 +479,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mSongRecyclerAdapter.notifyItemChanged(lPosition);
 
         Log.d(TAG, "onFavriteItemClick: preference ");
-        SharedPreferences.Editor lSharedPrefrence=getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE,Context.MODE_PRIVATE).edit();
-        lSharedPrefrence.putBoolean(UtilityClass.IS_DATABASE_UPDATED,true);
+        SharedPreferences.Editor lSharedPrefrence = getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE, Context.MODE_PRIVATE).edit();
+        lSharedPrefrence.putBoolean(UtilityClass.IS_DATABASE_UPDATED, true);
         lSharedPrefrence.commit();
 
     }
@@ -395,31 +488,30 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     /**
      * changing the color for list item for the song which is playing
      */
-    void chageColorForSong(int pSongPositionToChangeColor){
+    void chageColorForSong(int pSongPositionToChangeColor) {
 
 
-        int lPosition=getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE,Context.MODE_PRIVATE).getInt(UtilityClass.SONG_POSITION_SET_COLOR,mSongJDOArrayList.size());
+        int lPosition = getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE, Context.MODE_PRIVATE).getInt(UtilityClass.SONG_POSITION_SET_COLOR, mSongJDOArrayList.size());
         mSearchSongArryList.clear();
         mSearchSongArryList.addAll(mSongJDOArrayList);
 
         SongJDO lSong = mSearchSongArryList.get(lPosition);
         lSong.setmIsThisSongPlaying(true);
         mSearchSongArryList.set(lPosition, lSong);
-
+        mRecyclerView.scrollToPosition(lPosition);
         mSongRecyclerAdapter.notifyDataSetChanged();
-//        mSongRecyclerAdapter.notifyItemChanged(lPosition);
 
-        Log.d(TAG, "changeColorForSong:  song_is_playing"+lPosition+"  "+pSongPositionToChangeColor);
+        Log.d(TAG, "changeColorForSong:  song_is_playing" + lPosition + "  " + pSongPositionToChangeColor);
 
     }
 
     /**
-     *  broadcast receive to receive the currt position to chang highlight the song which is playing
+     * broadcast receive to receive the currt position to chang highlight the song which is playing
      */
     BroadcastReceiver mSongReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            int lSongPositionToChangeColor=intent.getIntExtra(UtilityClass.SONG_COLUMN_ID,mSongJDOArrayList.size());
+            int lSongPositionToChangeColor = intent.getIntExtra(UtilityClass.SONG_COLUMN_ID, mSongJDOArrayList.size());
             chageColorForSong(lSongPositionToChangeColor);
         }
     };
@@ -434,4 +526,74 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mSongTable.close();
         super.onDestroy();
     }
+
+
 }
+
+/**
+ * testing how the annonymous class works
+ */
+// class MyinterFace {
+//     public abstract class MyAbstract{
+//
+//    public abstract  void may();
+//     }
+//     interface  my{
+//         public void a();
+//     }
+//
+//}
+//
+//abstract  class  a{
+//    abstract  void b();
+//    void c(){
+//
+//    }
+//}
+//
+// class C{
+//
+//
+//     MyinterFace.my jk = new my() {
+//         @Override
+//         public void a() {
+//
+//         }
+//     };
+//     a A=new a() {
+//         @Override
+//         void b() {
+//             super.c();
+//         }
+//
+//         @Override
+//         public boolean equals(Object obj) {
+//             return super.equals(obj);
+//         }
+//
+//         @Override
+//         protected Object clone() throws CloneNotSupportedException {
+//             return super.clone();
+//         }
+//
+//         @Override
+//         public String toString() {
+//             return super.toString();
+//         }
+//
+//         @Override
+//         protected void finalize() throws Throwable {
+//             super.finalize();
+//         }
+//
+//         @Override
+//         public int hashCode() {
+//             return super.hashCode();
+//         }
+//
+//         @Override
+//         void c() {
+//             super.c();
+//         }
+//     };
+// }

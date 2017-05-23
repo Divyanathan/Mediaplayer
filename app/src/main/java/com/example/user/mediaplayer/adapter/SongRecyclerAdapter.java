@@ -80,7 +80,7 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
 
         if(lSongPosition==position){
 
-            Log.d(TAG, "onBindViewHolder: song_is_playing"+" "+mSongJDOobj.getmColumnId()+" "+mSongJDOobj.getmSongTitel()+" "+holder.sArtistTextView.getText().toString());
+            Log.d(TAG, "onBindViewHolder: 2 song_is_playing"+" "+mSongJDOobj.getmColumnId()+" "+mSongJDOobj.getmSongTitel()+" "+holder.sArtistTextView.getText().toString());
             holder.sTitleTextView.setTextColor(ContextCompat.getColor(mContext,R.color.colorPrimary));
             holder.sArtistTextView.setTextColor(ContextCompat.getColor(mContext,R.color.colorPrimary));
         } else {

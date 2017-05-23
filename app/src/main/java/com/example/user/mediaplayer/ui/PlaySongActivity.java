@@ -75,13 +75,14 @@ public class PlaySongActivity extends AppCompatActivity {
         mPlayerLinearLayout = (LinearLayout) findViewById(R.id.playerLayout);
         mSeekBar = (SeekBar) findViewById(R.id.progressBar);
 
+
         mStartService = new Intent(PlaySongActivity.this, MediaPlayerBoundService.class);
         /**
          * set then song details from the listActivity
          */
         mIsSongIsRunninginBackground = getIntent().getBooleanExtra(UtilityClass.SONG_IS_PLAYING_IN_BACKGROUND, false);
         if (mIsSongIsRunninginBackground) {
-            bindService(mStartService, mServiceConnection, Context.BIND_AUTO_CREATE);
+              bindService(mStartService, mServiceConnection, Context.BIND_AUTO_CREATE);
         } else {
 
             mSongJDOobject = (SongJDO) getIntent().getSerializableExtra(UtilityClass.SONG_JDO);
@@ -97,7 +98,7 @@ public class PlaySongActivity extends AppCompatActivity {
         }
 
         /**
-         *          set the pay and next button image
+         *set the pay and next button image
          */
         mSharedPrefrence = getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE, Context.MODE_PRIVATE);
         String lCurrentSongState = mSharedPrefrence.getString(UtilityClass.REPEAT_SONG, UtilityClass.REPEAT_SONG_OFF);
@@ -151,7 +152,7 @@ public class PlaySongActivity extends AppCompatActivity {
             }
         });
         /**
-         *              play/pause button
+         *play/pause button
          */
 
         mPlayBtnImageView.setOnClickListener(new View.OnClickListener() {
@@ -165,7 +166,7 @@ public class PlaySongActivity extends AppCompatActivity {
             }
         });
         /**
-         *          play next Song
+         * play next Song
          */
         mNextBtnImageView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -189,7 +190,7 @@ public class PlaySongActivity extends AppCompatActivity {
             }
         });
         /**
-         *      play The Previous Song
+         * play The Previous Song
          */
         mPreviousBtnImageView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -211,7 +212,7 @@ public class PlaySongActivity extends AppCompatActivity {
             }
         });
         /**
-         *      click event For rpeatSong
+         *click event For rpeatSong
          */
         mRepeatSongImageView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -240,7 +241,7 @@ public class PlaySongActivity extends AppCompatActivity {
         });
 
         /**
-         *          click Event for  favourite song
+         * click Event for  favourite song
          */
         mFavourSongImageView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -264,14 +265,6 @@ public class PlaySongActivity extends AppCompatActivity {
             }
         });
 
-
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-
     }
 
     /**
@@ -287,7 +280,7 @@ public class PlaySongActivity extends AppCompatActivity {
                 mSeekBar.setProgress(lSongCurrentPosition);
                 mMinuteTextView.setText("" + lSongCurrentPosition / 60000);
                 mSecondTextView.setText("" + (lSongCurrentPosition / 1000) % 60);
-                Log.d(TAG, "+++++++++++++++run:set Duration: " + (lSongCurrentPosition / 60) + " sec" + (lSongCurrentPosition / 60) % 60);
+//                Log.d(TAG, "+++++++++++++++run:set Duration: " + (lSongCurrentPosition / 60) + " sec" + (lSongCurrentPosition / 60) % 60);
 
             } else if (pIntent.getBooleanExtra(UtilityClass.IS_ALL_SONG_PLAYED, false)) {
                 setPlayBtnImage(R.drawable.play);
@@ -345,7 +338,6 @@ public class PlaySongActivity extends AppCompatActivity {
     /**
      * set the play Button Image as Play/Pause
      */
-
     void setPlayBtnImage(int pImageId) {
 
         Picasso.with(PlaySongActivity.this)
@@ -433,6 +425,7 @@ public class PlaySongActivity extends AppCompatActivity {
         unbindService(mServiceConnection);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mSongBroadCastReciver);
         mSongTable.close();
+        Log.d(TAG, "onDestroy: ");
         super.onDestroy();
     }
 
@@ -446,7 +439,7 @@ public class PlaySongActivity extends AppCompatActivity {
     }
 
     /**
-     * chek the service is running or not
+     * check the service is running or not
      */
     boolean isServiceIsRunnig(Class<?> pServicName) {
         ActivityManager lActivityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
@@ -459,5 +452,27 @@ public class PlaySongActivity extends AppCompatActivity {
         return false;
     }
 
+    @Override
+    protected void onStart() {
+        Log.d(TAG, "onStart: ");
+        super.onStart();
+    }
 
+    @Override
+    protected void onStop() {
+        Log.d(TAG, "onStop: ");
+        super.onStop();
+    }
+
+    @Override
+    protected void onRestart() {
+        Log.d(TAG, "onRestart: ");
+        super.onRestart();
+    }
+    @Override
+    protected void onResume() {
+        Log.d(TAG, "onResume: ");
+        super.onResume();
+    }
+    
 }

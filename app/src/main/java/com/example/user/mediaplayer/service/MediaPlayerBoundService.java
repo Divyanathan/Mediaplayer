@@ -52,7 +52,6 @@ public class MediaPlayerBoundService extends Service {
     ArrayList<SongJDO> mSongJDOArrayList = new ArrayList<SongJDO>();
 
     private static final String TAG = "MediaPlayerBoundService";
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -224,8 +223,6 @@ public class MediaPlayerBoundService extends Service {
         mMediaPlayer.reset();
         mTimer.cancel();
     }
-
-
     /**
      * @param pSeekTime change the position to while playing the song
      */
@@ -233,8 +230,6 @@ public class MediaPlayerBoundService extends Service {
         mMediaPlayer.seekTo(pSeekTime);
         setTimer();
     }
-
-
     /**
      * @return return true if song is playing
      */
@@ -423,20 +418,24 @@ public class MediaPlayerBoundService extends Service {
     public boolean onUnbind(Intent intent) {
         Log.e(TAG, "onUnbind: =================");
         if (!mMediaPlayer.isPlaying()) {
+            mTimer.cancel();
             stopSelf();
         }
         return true;
     }
 
+
+
     @Override
     public void onDestroy() {
         Log.e(TAG, "onDestroy: =================");
+        mTimer.cancel();
         mMediaPlayer.stop();
         mMediaPlayer.release();
         getSharedPreferences(UtilityClass.MY_SHARED_PREFRENCE, Context.MODE_PRIVATE)
                 .edit()
                 .putBoolean(UtilityClass.IS_SONG_PLAYING, false)
-                .putInt(UtilityClass.CURRENTLY_PLAYING_SONG,-1)
+                .putInt(UtilityClass.SONG_POSITION_SET_COLOR,-1)
                 .commit();
         super.onDestroy();
 
